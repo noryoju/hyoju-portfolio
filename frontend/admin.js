@@ -325,6 +325,11 @@
   const RESERVATION_STATUSES = ["접수", "확정", "변경 요청", "취소"];
   const STATUS_CLASS = { 접수: "received", 확정: "confirmed", "변경 요청": "change", 취소: "cancelled" };
   const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+  const reservationSummary = document.getElementById("reservationSummary");
+  const reservationFilters = document.getElementById("reservationFilters");
+
+  let allReservations = []; // 서버에서 받은 전체 예약
+  let currentFilter = "전체"; // 선택한 처리 상태 필터
 
   function formatVisitTime(visitDate, visitTime) {
     const [y, m, d] = visitDate.split("-").map(Number);
@@ -332,11 +337,46 @@
     return `${y}.${String(m).padStart(2, "0")}.${String(d).padStart(2, "0")} (${day}) ${visitTime}`;
   }
 
-  function renderReservations(reservations) {
-    if (reservations.length === 0) {
+  // 1. 처리 상태별 요약: "전체 n건 / 접수 n건 / 확정 n건 / 변경 요청 n건 / 취소 n건"
+  function renderSummary() {
+    const counts = { 전체: allReservations.length };
+    RESERVATION_STATUSES.forEach((s) => {
+      counts[s] = allReservations.filter((r) => r.status === s).length;
+    });
+
+    reservationSummary.textContent = ["전체", ...RESERVATION_STATUSES]
+      .map((s) => `${s} ${counts[s]}건`)
+      .join(" / ");
+
+    reservationFilters.querySelectorAll(".admin-res-filter").forEach((btn) => {
+      btn.querySelector(".count").textContent = counts[btn.dataset.filter];
+    });
+  }
+
+  // 2. 선택한 필터에 해당하는 예약만 표로 보여준다
+  function renderFilteredReservations() {
+    reservationFilters.querySelectorAll(".admin-res-filter").forEach((btn) => {
+      const active = btn.dataset.filter === currentFilter;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-pressed", String(active));
+    });
+
+    const visible = currentFilter === "전체"
+      ? allReservations
+      : allReservations.filter((r) => r.status === currentFilter);
+
+    if (allReservations.length === 0) {
       reservationTableBody.innerHTML = '<tr><td colspan="6" class="admin-res-empty">아직 접수된 예약이 없습니다.</td></tr>';
       return;
     }
+    if (visible.length === 0) {
+      reservationTableBody.innerHTML = `<tr><td colspan="6" class="admin-res-empty">'${escapeHtml(currentFilter)}' 상태의 예약이 없습니다.</td></tr>`;
+      return;
+    }
+    renderReservations(visible);
+  }
+
+  function renderReservations(reservations) {
 
     reservationTableBody.innerHTML = "";
     for (const r of reservations) {
@@ -367,8 +407,13 @@
     reservationError.hidden = true;
     try {
       const res = await api("/api/admin/reservations");
-      renderReservations(res.reservations);
+      allReservations = res.reservations;
+      renderSummary();
+      renderFilteredReservations();
     } catch (err) {
+      allReservations = [];
+      renderSummary();
+      reservationSummary.textContent = "";
       reservationTableBody.innerHTML = '<tr><td colspan="6" class="admin-res-empty">예약 목록을 불러오지 못했습니다.</td></tr>';
       reservationError.textContent = err.message;
       reservationError.hidden = false;
@@ -394,6 +439,13 @@
       group.querySelectorAll("button").forEach((b) => (b.disabled = false));
     }
   }
+
+  reservationFilters.addEventListener("click", (e) => {
+    const button = e.target.closest(".admin-res-filter");
+    if (!button) return;
+    currentFilter = button.dataset.filter;
+    renderFilteredReservations();
+  });
 
   reservationTableBody.addEventListener("click", (e) => {
     const button = e.target.closest(".admin-res-btn");

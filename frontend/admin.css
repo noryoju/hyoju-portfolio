@@ -396,3 +396,66 @@ body {
 .admin-panel[hidden] {
   display: none;
 }
+
+/* ==========================================================================
+   예약 요약 문장 + 처리 상태 필터
+   ========================================================================== */
+.admin-res-summary {
+  margin-top: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.admin-res-summary:empty {
+  display: none;
+}
+
+.admin-res-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.admin-res-filter {
+  --res-color: #475569;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--res-color);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--res-color) 45%, transparent);
+}
+
+.admin-res-filter.received { --res-color: #64748b; }
+.admin-res-filter.confirmed { --res-color: #059669; }
+.admin-res-filter.change { --res-color: #d97706; }
+.admin-res-filter.cancelled { --res-color: #dc2626; }
+
+.admin-res-filter .count {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: color-mix(in srgb, var(--res-color) 15%, transparent);
+}
+
+.admin-res-filter:hover {
+  background: color-mix(in srgb, var(--res-color) 10%, transparent);
+}
+
+.admin-res-filter.is-active {
+  color: #ffffff;
+  background: var(--res-color);
+  border-color: var(--res-color);
+}
+
+.admin-res-filter.is-active .count {
+  background: rgba(255, 255, 255, 0.25);
+}
