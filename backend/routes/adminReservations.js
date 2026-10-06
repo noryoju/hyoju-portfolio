@@ -10,6 +10,13 @@ function sendError(res, err, fallbackMessage) {
   if (err.code === "NOT_CONFIGURED") {
     return res.status(503).json({ ok: false, error: err.message });
   }
+  // 23505: 유일 인덱스 위반 (같은 날짜·시간에 취소되지 않은 다른 예약이 이미 있음)
+  if (err.code === "23505") {
+    return res.status(409).json({
+      ok: false,
+      error: "같은 날짜·시간에 이미 다른 예약이 있어 상태를 바꿀 수 없습니다. 기존 예약을 먼저 취소해 주세요.",
+    });
+  }
   res.status(500).json({ ok: false, error: fallbackMessage });
 }
 

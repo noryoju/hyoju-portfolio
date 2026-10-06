@@ -74,3 +74,31 @@ update public.reservations set name = name;
 alter table public.reservations alter column reservation_no set not null;
 
 revoke execute on function public.set_reservation_no() from public, anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 2026-10-06 추가: 방문 희망 시간 중복 방지
+-- ---------------------------------------------------------------------------
+-- 같은 날짜·시간에는 '취소'가 아닌 예약이 하나만 존재할 수 있다.
+-- (동시에 두 명이 신청해도 DB가 하나만 받아들인다. 취소되면 그 시간은 다시 열린다)
+create unique index reservations_slot_key
+  on public.reservations (visit_date, visit_time)
+  where status <> '취소';
+
+-- 예약 페이지에서 '(완료)' 표시용. 날짜·시간만 돌려주고 개인정보는 돌려주지 않는다.
+-- (Supabase 보안 점검에서 'anon이 SECURITY DEFINER 함수 실행 가능' 경고가 뜨지만 의도된 공개 함수다)
+create or replace function public.get_booked_slots(from_date date, to_date date)
+returns table (visit_date date, visit_time text)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select r.visit_date, r.visit_time
+  from public.reservations r
+  where r.status <> '취소'
+    and r.visit_date between from_date and least(to_date, from_date + 366)
+  order by r.visit_date, r.visit_time;
+$$;
+
+revoke execute on function public.get_booked_slots(date, date) from public;
+grant execute on function public.get_booked_slots(date, date) to anon, authenticated;

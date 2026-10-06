@@ -1,6 +1,8 @@
 // 방문 예약 페이지
 // - 캘린더(flatpickr): 공휴일·주말을 제외한 평일만 선택
 // - 희망 시간: 13:00 ~ 18:00, 30분 단위
+// - 이미 예약된 시간은 '(완료)'로 표시하고 선택 불가, 모든 시간이 찬 날짜는 캘린더에서 선택 불가
+//   (최종 중복 방지는 DB의 reservations_slot_key 유일 인덱스가 담당)
 // - 필수 입력 + 이메일 형식 + 동의 체크가 모두 충족될 때만 예약하기 버튼 활성화
 // - 최종 확인 팝업에서 예약하기를 누르면
 //   1) Formspree로 전송 → 운영자 이메일로 예약 내용 수신 (받는 주소는 Formspree 폼 설정에서 지정)
@@ -19,9 +21,18 @@ const SUPABASE_KEY = 'sb_publishable_NEd1TVepg7zHlJJYMm73eA_0Qb0EfCr';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
+// 희망 시간 목록: 13:00 ~ 18:00, 30분 단위
+const TIME_SLOTS = [];
+for (let minutes = 13 * 60; minutes <= 18 * 60; minutes += 30) {
+  const hh = String(Math.floor(minutes / 60)).padStart(2, '0');
+  const mm = String(minutes % 60).padStart(2, '0');
+  TIME_SLOTS.push(`${hh}:${mm}`);
+}
+
 const els = {
   form: document.getElementById('reservationForm'),
   holidayStatus: document.getElementById('holidayStatus'),
+  slotStatus: document.getElementById('slotStatus'),
   selectedDate: document.getElementById('selectedDate'),
   visitTime: document.getElementById('visitTime'),
   name: document.getElementById('visitorName'),
@@ -40,6 +51,8 @@ const els = {
 
 // 공휴일 목록 { 'YYYY-MM-DD': '공휴일 이름' }
 const holidays = {};
+// 이미 예약된 시간 { 'YYYY-MM-DD': Set(['14:30', ...]) }
+const bookedSlots = {};
 let selectedDateValue = ''; // 'YYYY-MM-DD'
 let emailTouched = false;
 
@@ -59,6 +72,22 @@ function isWeekend(date) {
   return date.getDay() === 0 || date.getDay() === 6;
 }
 
+function isFullyBooked(isoDate) {
+  return (bookedSlots[isoDate]?.size || 0) >= TIME_SLOTS.length;
+}
+
+// 선택 불가 날짜: 주말, 공휴일, 모든 시간이 예약된 날
+function isDateDisabled(date) {
+  const iso = toISODate(date);
+  return isWeekend(date) || Boolean(holidays[iso]) || isFullyBooked(iso);
+}
+
+// 공휴일/예약 정보를 다시 반영하고, 고른 날짜가 막혔으면 선택 해제
+function applyDisabledDates() {
+  calendar.set('disable', [isDateDisabled]);
+  if (selectedDateValue && isDateDisabled(new Date(`${selectedDateValue}T00:00:00`))) calendar.clear();
+}
+
 /* ---------- 1. 캘린더 ---------- */
 const tomorrow = new Date();
 tomorrow.setDate(tomorrow.getDate() + 1);
@@ -70,19 +99,22 @@ const calendar = flatpickr('#calendar', {
   locale: 'ko',
   minDate: tomorrow,
   maxDate: maxDate,
-  disable: [(date) => isWeekend(date) || Boolean(holidays[toISODate(date)])],
+  disable: [isDateDisabled],
   onDayCreate: (_selected, _str, _fp, dayElem) => {
-    const name = holidays[toISODate(dayElem.dateObj)];
+    const iso = toISODate(dayElem.dateObj);
+    const name = holidays[iso];
     if (name) {
       dayElem.classList.add('is-holiday');
       dayElem.title = name;
+    } else if (isFullyBooked(iso)) {
+      dayElem.title = '예약 마감';
     }
   },
   onChange: (selectedDates) => {
     const date = selectedDates[0];
     selectedDateValue = date ? toISODate(date) : '';
     els.selectedDate.value = date ? toKoreanDate(date) : '';
-    updateButton();
+    refreshTimeOptions();
   },
 });
 
@@ -102,21 +134,55 @@ async function loadHolidays() {
     els.holidayStatus.textContent = '공휴일 정보를 불러오지 못해 주말만 제외했습니다. 공휴일 예약은 확인 후 조정될 수 있습니다.';
   }
 
-  // 공휴일을 반영해 다시 그리고, 이미 고른 날짜가 공휴일이면 선택 해제
-  calendar.set('disable', [(date) => isWeekend(date) || Boolean(holidays[toISODate(date)])]);
-  if (selectedDateValue && holidays[selectedDateValue]) calendar.clear();
+  applyDisabledDates();
+}
+
+// 이미 예약된 날짜·시간: Supabase 함수 get_booked_slots (날짜·시간만 반환, 개인정보 없음)
+async function loadBookedSlots() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_booked_slots`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from_date: toISODate(tomorrow), to_date: toISODate(maxDate) }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows = await res.json();
+
+    Object.keys(bookedSlots).forEach((key) => delete bookedSlots[key]);
+    rows.forEach(({ visit_date: date, visit_time: time }) => {
+      (bookedSlots[date] ||= new Set()).add(time);
+    });
+    els.slotStatus.textContent = '(완료)로 표시된 시간은 이미 예약된 시간이라 선택할 수 없습니다.';
+  } catch (err) {
+    console.error('예약 현황 조회 실패:', err);
+    els.slotStatus.textContent = '예약 현황을 불러오지 못했습니다. 이미 예약된 시간이면 신청 단계에서 안내됩니다.';
+  }
+
+  applyDisabledDates();
+  refreshTimeOptions();
 }
 
 /* ---------- 2. 희망 시간 (13:00 ~ 18:00, 30분 단위) ---------- */
 function fillTimeOptions() {
-  for (let minutes = 13 * 60; minutes <= 18 * 60; minutes += 30) {
-    const hh = String(Math.floor(minutes / 60)).padStart(2, '0');
-    const mm = String(minutes % 60).padStart(2, '0');
+  TIME_SLOTS.forEach((time) => {
     const option = document.createElement('option');
-    option.value = `${hh}:${mm}`;
-    option.textContent = `${hh}:${mm}`;
+    option.value = time;
+    option.textContent = time;
     els.visitTime.appendChild(option);
-  }
+  });
+}
+
+// 선택한 날짜 기준으로 이미 예약된 시간은 '(완료)' 표시 + 선택 불가
+function refreshTimeOptions() {
+  const booked = bookedSlots[selectedDateValue] || new Set();
+  [...els.visitTime.options].forEach((option) => {
+    if (!option.value) return; // '시간을 선택하세요'
+    const isBooked = booked.has(option.value);
+    option.disabled = isBooked;
+    option.textContent = isBooked ? `${option.value} (완료)` : option.value;
+  });
+  if (els.visitTime.selectedOptions[0]?.disabled) els.visitTime.value = '';
+  updateButton();
 }
 
 /* ---------- 3. 입력 검사 ---------- */
@@ -208,9 +274,11 @@ async function saveToSupabase(data) {
     body: JSON.stringify(data),
   });
   if (res.status === 409) {
-    // 같은 이름/이메일로 같은 날짜·시간에 이미 신청한 경우 (예약 번호 중복)
-    const err = new Error('이미 같은 날짜·시간에 신청하신 예약이 있습니다.');
-    err.code = 'DUPLICATE';
+    // reservations_slot_key: 그 사이 다른 사람이 같은 날짜·시간을 먼저 예약한 경우
+    // reservations_reservation_no_key: 같은 이름/이메일로 같은 날짜·시간에 이미 신청한 경우
+    const body = await res.text();
+    const err = new Error('이미 예약된 날짜·시간입니다.');
+    err.code = body.includes('reservations_reservation_no_key') ? 'DUPLICATE' : 'SLOT_TAKEN';
     throw err;
   }
   if (!res.ok) throw new Error(`Supabase HTTP ${res.status}: ${await res.text()}`);
@@ -224,7 +292,7 @@ async function saveReservation() {
     await saveToSupabase(data);
     savedToDb = true;
   } catch (err) {
-    if (err.code === 'DUPLICATE') throw err;
+    if (err.code === 'DUPLICATE' || err.code === 'SLOT_TAKEN') throw err;
     console.error('예약 기록(Supabase) 실패:', err);
   }
 
@@ -249,12 +317,16 @@ async function confirmReservation() {
     showEmailState();
     els.purposeCount.textContent = '0';
     updateButton();
+    loadBookedSlots(); // 방금 예약한 시간도 (완료)로 반영
   } catch (err) {
     console.error('예약 저장 실패:', err);
-    els.submitError.textContent = err.code === 'DUPLICATE'
-      ? '이미 같은 날짜·시간에 신청하신 예약이 있습니다. 다른 시간을 선택해 주세요.'
-      : '예약을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+    const messages = {
+      DUPLICATE: '이미 같은 날짜·시간에 신청하신 예약이 있습니다. 다른 시간을 선택해 주세요.',
+      SLOT_TAKEN: '방금 다른 분이 이 시간을 먼저 예약했습니다. 팝업을 닫고 다른 시간을 선택해 주세요.',
+    };
+    els.submitError.textContent = messages[err.code] || '예약을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.';
     els.submitError.hidden = false;
+    if (err.code === 'SLOT_TAKEN') loadBookedSlots(); // 드롭다운에 (완료) 반영
   } finally {
     els.confirmBtn.disabled = false;
     els.cancelBtn.disabled = false;
@@ -300,3 +372,4 @@ if (window.lucide) lucide.createIcons();
 fillTimeOptions();
 updateButton();
 loadHolidays();
+loadBookedSlots();
