@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>찾아오는 길 | 노효주 포트폴리오</title>
+  <meta name="description" content="노효주 포트폴리오 - 찾아오는 길, 현재 날씨, 방문 예약 안내">
+
+  <!-- Fonts (기존 포트폴리오와 동일) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- 지도: Leaflet + OpenStreetMap 타일 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="location.css">
+</head>
+<body>
+  <main class="loc-page">
+    <div class="container loc-container">
+      <a href="index.html" class="loc-back"><i data-lucide="arrow-left"></i> 포트폴리오로 돌아가기</a>
+
+      <header class="loc-header">
+        <p class="loc-eyebrow">VISIT &amp; CONTACT</p>
+        <h1 class="loc-title">찾아오는 길</h1>
+        <p class="loc-desc">포트폴리오를 보시고 이야기 나누고 싶으시다면, 아래 위치로 방문해 주세요.</p>
+      </header>
+
+      <!-- 1. 주소 + 지도 -->
+      <section class="loc-card" aria-labelledby="addrTitle">
+        <div class="loc-card-head">
+          <i data-lucide="map-pin"></i>
+          <h2 id="addrTitle">주소</h2>
+        </div>
+        <p class="loc-address">상명대학교 천안캠퍼스 <strong>C404a</strong></p>
+        <p class="loc-address-sub">충청남도 천안시 동남구 상명대길 31</p>
+
+        <div class="loc-map" id="campusMap" role="img" aria-label="상명대학교 천안캠퍼스 위치 지도"></div>
+
+        <div class="loc-map-links">
+          <a href="https://map.kakao.com/link/search/상명대학교 천안캠퍼스" target="_blank" rel="noopener" class="btn btn-outline">
+            <i data-lucide="navigation"></i> 카카오맵에서 길찾기
+          </a>
+          <a href="https://map.naver.com/p/search/상명대학교 천안캠퍼스" target="_blank" rel="noopener" class="btn btn-outline">
+            <i data-lucide="map"></i> 네이버지도에서 보기
+          </a>
+        </div>
+      </section>
+
+      <!-- 2. 주소 기준 현재 날씨 -->
+      <section class="loc-card" aria-labelledby="weatherTitle">
+        <div class="loc-card-head">
+          <i data-lucide="cloud-sun"></i>
+          <h2 id="weatherTitle">현재 날씨</h2>
+        </div>
+        <div class="loc-weather">
+          <div class="loc-weather-item">
+            <i data-lucide="thermometer"></i>
+            <span class="loc-weather-label">온도</span>
+            <span class="loc-weather-value" id="weatherTemp">--</span>
+          </div>
+          <div class="loc-weather-item">
+            <i data-lucide="droplets"></i>
+            <span class="loc-weather-label">습도</span>
+            <span class="loc-weather-value" id="weatherHumidity">--</span>
+          </div>
+        </div>
+        <p class="loc-weather-time" id="weatherTime">날씨 정보를 불러오는 중입니다…</p>
+      </section>
+
+      <!-- 3. 방문 예약 버튼 -->
+      <div class="loc-cta">
+        <a href="reservation.html" class="btn btn-primary loc-cta-btn">
+          <i data-lucide="calendar-check"></i> 방문 예약하기
+        </a>
+      </div>
+
+      <!-- 외부 서비스 출처 -->
+      <p class="loc-sources">
+        지도: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>
+        · 날씨: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0)
+      </p>
+    </div>
+  </main>
+
+  <script src="location.js"></script>
+</body>
+</html>

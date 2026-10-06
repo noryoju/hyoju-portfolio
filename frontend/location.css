@@ -1,0 +1,172 @@
+/* 찾아오는 길 / 방문 예약 페이지 전용 스타일 (style.css 변수 재사용) */
+
+.loc-page {
+  min-height: 100vh;
+  padding: 48px 0 64px;
+}
+
+.loc-container {
+  max-width: 760px;
+}
+
+.loc-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-decoration: none;
+  margin-bottom: 24px;
+}
+
+.loc-back:hover {
+  color: var(--accent-emerald);
+}
+
+.loc-back i {
+  width: 16px;
+  height: 16px;
+}
+
+.loc-header {
+  margin-bottom: 28px;
+}
+
+.loc-eyebrow {
+  color: var(--accent-emerald);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+}
+
+.loc-title {
+  font-size: 2rem;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.loc-desc {
+  color: var(--text-muted);
+}
+
+.loc-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.loc-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  color: var(--accent-emerald);
+}
+
+.loc-card-head h2 {
+  font-size: 1.15rem;
+  color: var(--text-main);
+}
+
+.loc-address {
+  font-size: 1.1rem;
+  color: var(--text-main);
+}
+
+.loc-address-sub {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 16px;
+}
+
+.loc-map {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-glass);
+  aspect-ratio: 16 / 10;
+  z-index: 0;
+}
+
+.loc-map-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.loc-weather {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.loc-weather-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 18px 12px;
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  color: var(--accent-emerald);
+}
+
+.loc-weather-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.loc-weather-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.loc-weather-time {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.loc-cta {
+  text-align: center;
+  margin: 32px 0 20px;
+}
+
+.loc-cta-btn {
+  font-size: 1.05rem;
+  padding: 14px 32px;
+}
+
+.loc-sources {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.loc-sources a {
+  color: inherit;
+}
+
+@media (max-width: 480px) {
+  .loc-page {
+    padding-top: 28px;
+  }
+
+  .loc-title {
+    font-size: 1.6rem;
+  }
+
+  .loc-card {
+    padding: 18px;
+  }
+
+  .loc-map-links .btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
