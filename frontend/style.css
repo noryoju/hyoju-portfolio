@@ -2571,3 +2571,46 @@ html[data-theme="light"] body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================================
+   찾아오는 길 바로가기 (메뉴·버튼)
+   ========================================================================== */
+.location-cta-btn {
+  margin-top: 0.75rem;
+}
+
+/* 메뉴 글자가 세로로 줄바꿈되지 않도록 고정 */
+.nav-link {
+  white-space: nowrap;
+}
+
+/* 메뉴 7개가 한 줄에 들어가도록 간격 축소 */
+.nav-list {
+  gap: 1rem;
+}
+
+/* 메뉴 항목이 한 줄에 다 들어가지 않는 폭에서는 햄버거 메뉴로 전환 */
+@media (max-width: 1180px) {
+  .hamburger-btn {
+    display: flex;
+  }
+  .nav-menu {
+    position: fixed;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
+    background: var(--bg-main);
+    border-bottom: 1px solid var(--border-glass);
+    padding: 1.5rem;
+    transform: translateY(-150%);
+    transition: transform var(--transition-fast);
+  }
+  .nav-menu.open {
+    transform: translateY(0);
+  }
+  .nav-list {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+}
