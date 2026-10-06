@@ -1,5 +1,46 @@
 /* 찾아오는 길 / 방문 예약 페이지 전용 스타일 (style.css 변수 재사용) */
 
+/* 메인 포트폴리오의 흑백(grayscale) 처리를 이 페이지에서만 해제하고 부드러운 녹색 계열 색감 적용 */
+html[data-theme="light"] body.loc-body {
+  filter: none;
+  background: linear-gradient(180deg, #ecfdf5 0%, #f8fafc 45%, #f0f9ff 100%);
+  background-attachment: fixed;
+
+  --accent-emerald: #059669;
+  --accent-mint: #34d399;
+  --accent-blue: #0284c7;
+  --accent-warm: #ea580c;
+  --bg-card: #ffffff;
+  --bg-secondary: #f0fdf4;
+  --border-glass: #d1fae5;
+  --text-main: #1f2937;
+  --text-muted: #4b5563;
+  --text-dim: #6b7280;
+  --shadow-card: 0 10px 25px -8px rgba(5, 150, 105, 0.18);
+}
+
+.loc-body .btn-outline {
+  color: var(--accent-emerald);
+  border-color: #a7f3d0;
+  background: #ffffff;
+}
+
+.loc-body .btn-outline:hover {
+  background: #ecfdf5;
+  border-color: var(--accent-emerald);
+}
+
+.loc-body .btn-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+}
+
+.loc-body .btn-primary:hover {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+}
+
 .loc-page {
   min-height: 100vh;
   padding: 48px 0 64px;
@@ -113,6 +154,17 @@
   border-radius: 12px;
   background: var(--bg-secondary);
   color: var(--accent-emerald);
+}
+
+/* 온도는 따뜻한 주황, 습도는 하늘색으로 구분 */
+.loc-weather-item.is-temp {
+  background: #fff7ed;
+  color: var(--accent-warm, #ea580c);
+}
+
+.loc-weather-item.is-humidity {
+  background: #f0f9ff;
+  color: var(--accent-blue);
 }
 
 .loc-weather-label {
