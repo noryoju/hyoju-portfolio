@@ -8,22 +8,128 @@
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
   <script src="https://unpkg.com/lucide@latest"></script>
 
+  <!-- 캘린더: flatpickr -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/ko.min.js"></script>
+
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="location.css">
+  <link rel="stylesheet" href="reservation.css">
 </head>
 <body class="loc-body">
   <main class="loc-page">
-    <div class="container loc-container">
+    <div class="container res-container">
       <a href="location.html" class="loc-back"><i data-lucide="arrow-left"></i> 찾아오는 길로 돌아가기</a>
 
       <header class="loc-header">
         <p class="loc-eyebrow">RESERVATION</p>
         <h1 class="loc-title">방문 예약</h1>
-        <!-- 예약 내용은 피드백 후 구성 예정 -->
+        <p class="loc-desc">공휴일을 제외한 평일 중 원하시는 날짜와 시간을 골라 주세요. <span class="res-required-mark">*</span> 표시는 필수 입력입니다.</p>
       </header>
+
+      <form id="reservationForm" novalidate>
+        <div class="res-grid">
+          <!-- 왼쪽: 캘린더 + 선택 날짜 + 희망 시간 -->
+          <section class="loc-card res-left" aria-labelledby="dateTitle">
+            <div class="loc-card-head">
+              <i data-lucide="calendar-days"></i>
+              <h2 id="dateTitle">날짜 · 시간 선택</h2>
+            </div>
+
+            <div id="calendar" class="res-calendar"></div>
+            <p class="res-hint" id="holidayStatus">공휴일 정보를 불러오는 중입니다…</p>
+
+            <div class="res-field">
+              <label for="selectedDate">선택한 날짜 <span class="res-required-mark">*</span></label>
+              <input type="text" id="selectedDate" readonly placeholder="캘린더에서 날짜를 선택하세요">
+            </div>
+
+            <div class="res-field">
+              <label for="visitTime">희망 시간 <span class="res-required-mark">*</span></label>
+              <select id="visitTime" required>
+                <option value="">시간을 선택하세요</option>
+              </select>
+            </div>
+          </section>
+
+          <!-- 오른쪽: 이름, 이메일, 방문 목적 -->
+          <section class="loc-card res-right" aria-labelledby="infoTitle">
+            <div class="loc-card-head">
+              <i data-lucide="user-round"></i>
+              <h2 id="infoTitle">방문자 정보</h2>
+            </div>
+
+            <div class="res-field">
+              <label for="visitorName">이름 <span class="res-required-mark">*</span></label>
+              <input type="text" id="visitorName" maxlength="50" required placeholder="홍길동">
+            </div>
+
+            <div class="res-field">
+              <label for="visitorEmail">답장받을 이메일 <span class="res-required-mark">*</span></label>
+              <input type="email" id="visitorEmail" maxlength="254" required placeholder="name@example.com" aria-describedby="emailError">
+              <p class="res-error" id="emailError" hidden>이메일 형식이 올바르지 않습니다. 예) name@example.com</p>
+            </div>
+
+            <div class="res-field res-field-grow">
+              <label for="visitPurpose">방문 목적 <span class="res-required-mark">*</span></label>
+              <textarea id="visitPurpose" maxlength="1000" required placeholder="방문하시려는 목적을 자유롭게 적어 주세요."></textarea>
+              <p class="res-counter"><span id="purposeCount">0</span> / 1000</p>
+            </div>
+          </section>
+        </div>
+
+        <!-- 동의 + 예약하기 -->
+        <div class="res-submit">
+          <label class="res-consent">
+            <input type="checkbox" id="consent">
+            <span>입력 정보를 예약 상담 목적으로 운영자에게 전달하는 것에 동의합니다.</span>
+          </label>
+          <button type="submit" class="btn btn-primary res-submit-btn" id="reserveBtn" disabled>
+            <i data-lucide="calendar-check"></i> 예약하기
+          </button>
+          <p class="res-hint">날짜, 시간, 이름, 이메일, 방문 목적을 모두 입력하고 동의에 체크하면 버튼이 활성화됩니다.</p>
+        </div>
+      </form>
+
+      <p class="loc-sources">
+        캘린더: <a href="https://flatpickr.js.org/" target="_blank" rel="noopener">flatpickr</a>
+        · 공휴일: <a href="https://date.nager.at/" target="_blank" rel="noopener">Nager.Date</a>
+      </p>
     </div>
   </main>
 
-  <script>if (window.lucide) lucide.createIcons();</script>
+  <!-- 최종 확인 팝업 -->
+  <div class="res-modal" id="confirmModal" hidden>
+    <div class="res-modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h2 id="modalTitle">예약 내용을 확인해 주세요</h2>
+      <dl class="res-summary">
+        <dt>방문 날짜</dt><dd id="sumDate"></dd>
+        <dt>희망 시간</dt><dd id="sumTime"></dd>
+        <dt>이름</dt><dd id="sumName"></dd>
+        <dt>이메일</dt><dd id="sumEmail"></dd>
+        <dt>방문 목적</dt><dd id="sumPurpose" class="res-summary-long"></dd>
+      </dl>
+      <p class="res-error" id="submitError" hidden></p>
+      <div class="res-modal-actions">
+        <button type="button" class="btn btn-outline" id="cancelBtn">수정하기</button>
+        <button type="button" class="btn btn-primary" id="confirmBtn">
+          <i data-lucide="check"></i> 예약하기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 예약 완료 팝업 -->
+  <div class="res-modal" id="doneModal" hidden>
+    <div class="res-modal-box res-done" role="dialog" aria-modal="true" aria-labelledby="doneTitle">
+      <i data-lucide="circle-check-big"></i>
+      <h2 id="doneTitle">예약 신청이 접수되었습니다</h2>
+      <p>입력하신 이메일로 확인 답장을 드리겠습니다.</p>
+      <a href="location.html" class="btn btn-primary">확인</a>
+    </div>
+  </div>
+
+  <script src="reservation.js"></script>
 </body>
 </html>

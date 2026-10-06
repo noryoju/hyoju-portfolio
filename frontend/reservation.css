@@ -1,0 +1,274 @@
+/* 방문 예약 페이지 전용 스타일 (location.css의 색감 변수 재사용) */
+
+.res-container {
+  max-width: 1040px;
+}
+
+.res-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.res-grid .loc-card {
+  margin-bottom: 0;
+}
+
+.res-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.res-required-mark {
+  color: #dc2626;
+}
+
+/* 캘린더 (flatpickr inline) */
+.res-left .flatpickr-calendar.inline {
+  box-shadow: none;
+  border: 1px solid var(--border-glass);
+  margin: 0 auto;
+}
+
+.res-left .flatpickr-day.selected,
+.res-left .flatpickr-day.selected:hover {
+  background: var(--accent-emerald);
+  border-color: var(--accent-emerald);
+}
+
+.res-left .flatpickr-day.today {
+  border-color: #a7f3d0;
+}
+
+.res-left .flatpickr-day.flatpickr-disabled,
+.res-left .flatpickr-day.flatpickr-disabled:hover {
+  color: #cbd5e1;
+}
+
+.res-left .flatpickr-day.is-holiday {
+  color: #fca5a5;
+  text-decoration: line-through;
+}
+
+.res-hint {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-top: 8px;
+}
+
+/* 입력 필드 */
+.res-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.res-field label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.res-field input,
+.res-field select,
+.res-field textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 11px 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.res-field input:focus,
+.res-field select:focus,
+.res-field textarea:focus {
+  outline: none;
+  border-color: var(--accent-emerald);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+.res-field input[readonly] {
+  background: var(--bg-secondary);
+  cursor: default;
+}
+
+/* 방문 목적: 남은 높이를 채우는 큰 입력칸 */
+.res-field-grow {
+  flex: 1;
+}
+
+.res-field textarea {
+  flex: 1;
+  min-height: 180px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.res-counter {
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* 이메일 오류 표시 */
+.res-field input.is-invalid {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+.res-field input.is-invalid:focus {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+}
+
+.res-error {
+  color: #dc2626;
+  font-size: 0.82rem;
+}
+
+/* 동의 + 예약하기 */
+.res-submit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 28px 0 20px;
+  text-align: center;
+}
+
+.res-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.92rem;
+  color: var(--text-main);
+  cursor: pointer;
+}
+
+.res-consent input {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: var(--accent-emerald);
+  flex-shrink: 0;
+}
+
+.res-submit-btn {
+  font-size: 1.05rem;
+  padding: 14px 40px;
+}
+
+.loc-body .res-submit-btn:disabled,
+.loc-body .res-modal-actions .btn:disabled {
+  background: #cbd5e1;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 팝업 */
+.res-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+.res-modal[hidden] {
+  display: none;
+}
+
+.res-modal-box {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+}
+
+.res-modal-box h2 {
+  font-size: 1.2rem;
+  color: var(--text-main);
+  margin-bottom: 16px;
+}
+
+.res-summary {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 10px 12px;
+  font-size: 0.93rem;
+  margin-bottom: 16px;
+}
+
+.res-summary dt {
+  color: var(--text-muted);
+}
+
+.res-summary dd {
+  color: var(--text-main);
+  word-break: break-all;
+}
+
+.res-summary-long {
+  white-space: pre-wrap;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.res-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.res-done {
+  text-align: center;
+}
+
+.res-done > i {
+  width: 48px;
+  height: 48px;
+  color: var(--accent-emerald);
+  margin-bottom: 8px;
+}
+
+.res-done p {
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+/* 모바일: 캘린더 아래로 정보 입력 배치 */
+@media (max-width: 820px) {
+  .res-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 400px) {
+  .res-left .flatpickr-calendar.inline {
+    width: 100%;
+  }
+
+  .res-summary {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .res-summary dd {
+    margin-bottom: 8px;
+  }
+}
