@@ -5,6 +5,7 @@
 // - 최종 확인 팝업에서 예약하기를 누르면
 //   1) Formspree로 전송 → 운영자 이메일로 예약 내용 수신 (받는 주소는 Formspree 폼 설정에서 지정)
 //   2) Supabase reservations 테이블에 기록 보관
+//   Supabase를 먼저 저장해 중복 신청(같은 사람·같은 시간)을 거르고,
 //   둘 중 하나라도 성공하면 접수 완료로 처리한다.
 
 // Formspree 폼 주소
@@ -206,16 +207,33 @@ async function saveToSupabase(data) {
     },
     body: JSON.stringify(data),
   });
+  if (res.status === 409) {
+    // 같은 이름/이메일로 같은 날짜·시간에 이미 신청한 경우 (예약 번호 중복)
+    const err = new Error('이미 같은 날짜·시간에 신청하신 예약이 있습니다.');
+    err.code = 'DUPLICATE';
+    throw err;
+  }
   if (!res.ok) throw new Error(`Supabase HTTP ${res.status}: ${await res.text()}`);
 }
 
+// Supabase 기록을 먼저 시도해 중복 신청을 거른 뒤 이메일을 보낸다.
 async function saveReservation() {
   const data = getReservationData();
-  const results = await Promise.allSettled([sendToFormspree(data), saveToSupabase(data)]);
-  results
-    .filter((r) => r.status === 'rejected')
-    .forEach((r) => console.error('예약 전송 일부 실패:', r.reason));
-  if (results.every((r) => r.status === 'rejected')) throw new Error('모든 전송 실패');
+  let savedToDb = false;
+  try {
+    await saveToSupabase(data);
+    savedToDb = true;
+  } catch (err) {
+    if (err.code === 'DUPLICATE') throw err;
+    console.error('예약 기록(Supabase) 실패:', err);
+  }
+
+  try {
+    await sendToFormspree(data);
+  } catch (err) {
+    console.error('예약 메일(Formspree) 실패:', err);
+    if (!savedToDb) throw new Error('모든 전송 실패');
+  }
 }
 
 async function confirmReservation() {
@@ -233,7 +251,9 @@ async function confirmReservation() {
     updateButton();
   } catch (err) {
     console.error('예약 저장 실패:', err);
-    els.submitError.textContent = '예약을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.';
+    els.submitError.textContent = err.code === 'DUPLICATE'
+      ? '이미 같은 날짜·시간에 신청하신 예약이 있습니다. 다른 시간을 선택해 주세요.'
+      : '예약을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.';
     els.submitError.hidden = false;
   } finally {
     els.confirmBtn.disabled = false;

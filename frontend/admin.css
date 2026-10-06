@@ -206,3 +206,193 @@ body {
   align-items: center;
   padding: 6px 0;
 }
+
+/* ==========================================================================
+   상단 탭 (프로젝트 관리 / 예약하기 관리)
+   ========================================================================== */
+.admin-header {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admin-tab {
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  border: 1px solid transparent;
+}
+
+.admin-tab:hover {
+  color: var(--text-main);
+  border-color: var(--border-glass);
+}
+
+.admin-tab.is-active {
+  color: #ffffff;
+  background: #059669;
+  border-color: #059669;
+}
+
+/* 예약 관리 화면은 표가 넓어서 패널 폭을 넓힌다 */
+.admin-panel.is-wide {
+  max-width: 1180px;
+}
+
+.admin-view {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.admin-view[hidden] {
+  display: none;
+}
+
+/* ==========================================================================
+   예약 목록 표
+   ========================================================================== */
+.admin-res-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-res-head h2 {
+  margin-bottom: 0;
+}
+
+.admin-table-wrap {
+  overflow-x: auto;
+  margin-top: 12px;
+}
+
+.admin-res-table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  color: var(--text-main);
+}
+
+.admin-res-table th,
+.admin-res-table td {
+  padding: 12px 10px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+.admin-res-table th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.admin-res-no {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  white-space: nowrap;
+}
+
+.admin-res-name {
+  font-weight: 600;
+}
+
+.admin-res-email {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  word-break: break-all;
+}
+
+.admin-res-time {
+  white-space: nowrap;
+}
+
+.admin-res-purpose {
+  max-width: 280px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text-muted);
+}
+
+.admin-res-empty {
+  text-align: center !important;
+  color: var(--text-muted);
+  padding: 32px 10px !important;
+}
+
+/* 처리 상태 배지 + 관리 버튼 색상 */
+.admin-res-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-res-badge.received,
+.admin-res-btn.received { --res-color: #94a3b8; }
+.admin-res-badge.confirmed,
+.admin-res-btn.confirmed { --res-color: #10b981; }
+.admin-res-badge.change,
+.admin-res-btn.change { --res-color: #f59e0b; }
+.admin-res-badge.cancelled,
+.admin-res-btn.cancelled { --res-color: #ef4444; }
+
+.admin-res-badge {
+  color: var(--res-color);
+  background: color-mix(in srgb, var(--res-color) 18%, transparent);
+}
+
+.admin-res-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-res-btn {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--res-color);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--res-color) 55%, transparent);
+  transition: background 0.15s;
+}
+
+.admin-res-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--res-color) 15%, transparent);
+}
+
+.admin-res-btn.is-current {
+  color: #ffffff;
+  background: var(--res-color);
+  border-color: var(--res-color);
+  cursor: default;
+}
+
+.admin-res-btn:disabled:not(.is-current) {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+/* display:flex가 hidden 속성을 덮어써서 로그인 화면/관리 화면이 함께 보이던 문제 수정 */
+.admin-login-wrap[hidden],
+.admin-panel[hidden] {
+  display: none;
+}

@@ -22,9 +22,16 @@
 
 <div id="adminPanel" class="admin-panel" hidden>
   <header class="admin-header">
-    <h1>프로젝트 관리</h1>
-    <button id="logoutBtn" class="btn btn-outline btn-sm">로그아웃</button>
+    <h1 id="adminTitle">프로젝트 관리</h1>
+    <nav class="admin-tabs" aria-label="관리 메뉴">
+      <a href="#projects" class="admin-tab is-active" data-view="projects">프로젝트 관리</a>
+      <a href="#reservations" class="admin-tab" data-view="reservations">예약하기 관리</a>
+      <button id="logoutBtn" class="btn btn-outline btn-sm">로그아웃</button>
+    </nav>
   </header>
+
+  <!-- 프로젝트 관리 화면 -->
+  <div id="projectsView" class="admin-view">
 
   <section id="duplicateBanner" class="admin-duplicate-banner" hidden>
     <h2>중복 의심 프로젝트</h2>
@@ -85,6 +92,36 @@
     <h2>전체 프로젝트 목록</h2>
     <div id="projectList" class="admin-project-list"></div>
   </section>
+  </div>
+
+  <!-- 예약하기 관리 화면 -->
+  <div id="reservationsView" class="admin-view" hidden>
+    <section class="admin-list-section">
+      <div class="admin-res-head">
+        <h2>예약 요청 목록</h2>
+        <button type="button" id="reloadReservationsBtn" class="btn btn-outline btn-sm">새로고침</button>
+      </div>
+      <p class="admin-hint">관리 열의 버튼으로 처리 상태를 바꿀 수 있습니다. 접수: 신청 그대로 · 확정: 승인 · 변경 요청: 다른 시간 제안 · 취소: 방문 거절</p>
+      <p id="reservationError" class="admin-error" hidden></p>
+      <div class="admin-table-wrap">
+        <table class="admin-res-table">
+          <thead>
+            <tr>
+              <th scope="col">예약 번호</th>
+              <th scope="col">신청자/이메일</th>
+              <th scope="col">방문 희망 시간</th>
+              <th scope="col">방문 목적</th>
+              <th scope="col">처리 상태</th>
+              <th scope="col">관리</th>
+            </tr>
+          </thead>
+          <tbody id="reservationTableBody">
+            <tr><td colspan="6" class="admin-res-empty">불러오는 중...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
 </div>
 
 <script src="admin.js"></script>

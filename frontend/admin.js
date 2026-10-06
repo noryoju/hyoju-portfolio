@@ -81,6 +81,7 @@
       document.getElementById("loginPassword").value = "";
       showPanel();
       loadAll();
+      showViewFromHash();
     } catch (err) {
       loginError.textContent = err.message;
       loginError.hidden = false;
@@ -280,6 +281,126 @@
       console.error(err);
     }
   }
+
+  /* ==========================================================================
+     화면 전환 (프로젝트 관리 / 예약하기 관리)
+     세션 토큰이 메모리에만 있으므로 별도 HTML로 이동하지 않고 같은 페이지 안에서 화면을 바꾼다.
+     주소 끝(#projects / #reservations)으로 현재 화면을 구분한다.
+     ========================================================================== */
+  const VIEWS = {
+    projects: { el: document.getElementById("projectsView"), title: "프로젝트 관리" },
+    reservations: { el: document.getElementById("reservationsView"), title: "예약하기 관리" },
+  };
+  const adminTitle = document.getElementById("adminTitle");
+  const adminTabs = document.querySelectorAll(".admin-tab");
+
+  function showView(name) {
+    if (!VIEWS[name]) name = "projects";
+    Object.entries(VIEWS).forEach(([key, view]) => {
+      view.el.hidden = key !== name;
+    });
+    adminTabs.forEach((tab) => {
+      const active = tab.dataset.view === name;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-current", active ? "page" : "false");
+    });
+    adminTitle.textContent = VIEWS[name].title;
+    adminPanel.classList.toggle("is-wide", name === "reservations");
+    if (name === "reservations") loadReservations();
+  }
+
+  function showViewFromHash() {
+    showView(location.hash.replace("#", ""));
+  }
+
+  window.addEventListener("hashchange", () => {
+    if (authToken) showViewFromHash();
+  });
+
+  /* ==========================================================================
+     예약하기 관리
+     ========================================================================== */
+  const reservationTableBody = document.getElementById("reservationTableBody");
+  const reservationError = document.getElementById("reservationError");
+  const RESERVATION_STATUSES = ["접수", "확정", "변경 요청", "취소"];
+  const STATUS_CLASS = { 접수: "received", 확정: "confirmed", "변경 요청": "change", 취소: "cancelled" };
+  const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+  function formatVisitTime(visitDate, visitTime) {
+    const [y, m, d] = visitDate.split("-").map(Number);
+    const day = WEEKDAYS[new Date(y, m - 1, d).getDay()];
+    return `${y}.${String(m).padStart(2, "0")}.${String(d).padStart(2, "0")} (${day}) ${visitTime}`;
+  }
+
+  function renderReservations(reservations) {
+    if (reservations.length === 0) {
+      reservationTableBody.innerHTML = '<tr><td colspan="6" class="admin-res-empty">아직 접수된 예약이 없습니다.</td></tr>';
+      return;
+    }
+
+    reservationTableBody.innerHTML = "";
+    for (const r of reservations) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="admin-res-no">${escapeHtml(r.reservationNo)}</td>
+        <td>
+          <div class="admin-res-name">${escapeHtml(r.name)}</div>
+          <a class="admin-res-email" href="mailto:${escapeHtml(r.email)}">${escapeHtml(r.email)}</a>
+        </td>
+        <td class="admin-res-time">${escapeHtml(formatVisitTime(r.visitDate, r.visitTime))}</td>
+        <td class="admin-res-purpose">${escapeHtml(r.purpose)}</td>
+        <td><span class="admin-res-badge ${STATUS_CLASS[r.status] || ""}">${escapeHtml(r.status)}</span></td>
+        <td>
+          <div class="admin-res-actions" role="group" aria-label="${escapeHtml(r.reservationNo)} 처리 상태 변경">
+            ${RESERVATION_STATUSES.map((s) => `
+              <button type="button" class="admin-res-btn ${STATUS_CLASS[s]}${s === r.status ? " is-current" : ""}"
+                data-id="${r.id}" data-status="${s}" aria-pressed="${s === r.status}">${s}</button>
+            `).join("")}
+          </div>
+        </td>
+      `;
+      reservationTableBody.appendChild(tr);
+    }
+  }
+
+  async function loadReservations() {
+    reservationError.hidden = true;
+    try {
+      const res = await api("/api/admin/reservations");
+      renderReservations(res.reservations);
+    } catch (err) {
+      reservationTableBody.innerHTML = '<tr><td colspan="6" class="admin-res-empty">예약 목록을 불러오지 못했습니다.</td></tr>';
+      reservationError.textContent = err.message;
+      reservationError.hidden = false;
+    }
+  }
+
+  async function changeReservationStatus(button) {
+    const { id, status } = button.dataset;
+    if (button.classList.contains("is-current")) return;
+
+    const group = button.closest(".admin-res-actions");
+    group.querySelectorAll("button").forEach((b) => (b.disabled = true));
+    reservationError.hidden = true;
+    try {
+      await api(`/api/admin/reservations/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
+      await loadReservations();
+    } catch (err) {
+      reservationError.textContent = err.message;
+      reservationError.hidden = false;
+      group.querySelectorAll("button").forEach((b) => (b.disabled = false));
+    }
+  }
+
+  reservationTableBody.addEventListener("click", (e) => {
+    const button = e.target.closest(".admin-res-btn");
+    if (button) changeReservationStatus(button);
+  });
+
+  document.getElementById("reloadReservationsBtn").addEventListener("click", loadReservations);
 
   // 페이지를 새로 열거나 새로고침하면 항상 로그인 화면부터 시작한다.
   showLogin();

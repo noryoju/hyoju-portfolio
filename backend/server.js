@@ -9,7 +9,9 @@ const projectsRouter = require("./routes/projects");
 const adminAuthRouter = require("./routes/adminAuth");
 const adminProjectsRouter = require("./routes/adminProjects");
 const adminUploadRouter = require("./routes/adminUpload");
+const adminReservationsRouter = require("./routes/adminReservations");
 const { useSupabase } = require("./data/store");
+const { isConfigured: reservationsConfigured } = require("./data/reservationStore");
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -32,6 +34,7 @@ app.use("/api/projects", projectsRouter);
 app.use("/api/admin", adminAuthRouter);
 app.use("/api/admin/projects", adminProjectsRouter);
 app.use("/api/admin/upload", adminUploadRouter);
+app.use("/api/admin/reservations", adminReservationsRouter);
 
 // `node server.js`로 직접 실행할 때만 포트를 열어 서버를 띄운다.
 // Vercel 서버리스 환경에서는 이 파일을 함수로만 불러쓰기 때문에 listen하지 않는다.
@@ -41,6 +44,7 @@ if (require.main === module) {
     app.listen(PORT, () => {
       console.log(`[server] http://localhost:${PORT} 에서 실행 중`);
       console.log(`[projects] 저장소: ${useSupabase ? "Supabase(DB)" : "로컬 JSON 파일"}`);
+      console.log(`[reservations] 예약 DB: ${reservationsConfigured ? "연결됨" : "설정 필요 (.env 확인)"}`);
     });
   })();
 }
