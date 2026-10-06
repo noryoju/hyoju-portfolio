@@ -2,7 +2,13 @@
 // - 캘린더(flatpickr): 공휴일·주말을 제외한 평일만 선택
 // - 희망 시간: 13:00 ~ 18:00, 30분 단위
 // - 필수 입력 + 이메일 형식 + 동의 체크가 모두 충족될 때만 예약하기 버튼 활성화
-// - 최종 확인 팝업에서 예약하기를 누르면 Supabase reservations 테이블에 저장
+// - 최종 확인 팝업에서 예약하기를 누르면
+//   1) Formspree로 전송 → 운영자 이메일로 예약 내용 수신 (받는 주소는 Formspree 폼 설정에서 지정)
+//   2) Supabase reservations 테이블에 기록 보관
+//   둘 중 하나라도 성공하면 접수 완료로 처리한다.
+
+// Formspree 폼 주소
+const FORMSPREE_URL = 'https://formspree.io/f/xppqwwdq';
 
 // Supabase 공개(publishable) 키: 브라우저에 노출되어도 되는 키이며,
 // 테이블 권한(RLS)으로 '저장만 가능, 조회 불가'로 제한되어 있다.
@@ -157,7 +163,40 @@ function closeConfirm() {
   els.reserveBtn.focus();
 }
 
-async function saveReservation() {
+function getReservationData() {
+  return {
+    visit_date: selectedDateValue,
+    visit_time: els.visitTime.value,
+    name: els.name.value.trim(),
+    email: els.email.value.trim(),
+    purpose: els.purpose.value.trim(),
+    consent: els.consent.checked,
+  };
+}
+
+// Formspree: 운영자 이메일로 예약 내용 전송
+async function sendToFormspree(data) {
+  const res = await fetch(FORMSPREE_URL, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      _subject: `[방문 예약] ${data.visit_date} ${data.visit_time} - ${data.name}`,
+      방문날짜: els.selectedDate.value,
+      희망시간: data.visit_time,
+      이름: data.name,
+      email: data.email, // Formspree가 이 값을 답장 주소(Reply-To)로 사용
+      방문목적: data.purpose,
+      정보전달동의: data.consent ? '동의함' : '동의하지 않음',
+    }),
+  });
+  if (!res.ok) throw new Error(`Formspree HTTP ${res.status}: ${await res.text()}`);
+}
+
+// Supabase: 예약 기록 보관
+async function saveToSupabase(data) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/reservations`, {
     method: 'POST',
     headers: {
@@ -165,16 +204,18 @@ async function saveReservation() {
       'Content-Type': 'application/json',
       Prefer: 'return=minimal',
     },
-    body: JSON.stringify({
-      visit_date: selectedDateValue,
-      visit_time: els.visitTime.value,
-      name: els.name.value.trim(),
-      email: els.email.value.trim(),
-      purpose: els.purpose.value.trim(),
-      consent: els.consent.checked,
-    }),
+    body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+  if (!res.ok) throw new Error(`Supabase HTTP ${res.status}: ${await res.text()}`);
+}
+
+async function saveReservation() {
+  const data = getReservationData();
+  const results = await Promise.allSettled([sendToFormspree(data), saveToSupabase(data)]);
+  results
+    .filter((r) => r.status === 'rejected')
+    .forEach((r) => console.error('예약 전송 일부 실패:', r.reason));
+  if (results.every((r) => r.status === 'rejected')) throw new Error('모든 전송 실패');
 }
 
 async function confirmReservation() {
